@@ -125,6 +125,7 @@ def _fmt_pick(title, row):
 
 
 if __name__ == "__main__":
+    
     # variables defined specific to Apple stock ($)
     S = 239  # Example: live price
     K = 190  # strike price
@@ -144,10 +145,11 @@ if __name__ == "__main__":
     print("Put Price: $", put_px)
 
     # parity check
-    parity_check = call_price(S, K, T, r, sigma, q) - put_price(S, K, T, r, sigma, q) - S * exp(-q * T) + K * exp(-r * T)
+    parity_check = call_price(S, K, T, r, sigma, q) - put_price(S,
+                                                                K, T, r, sigma, q) - S * exp(-q * T) + K * exp(-r * T)
     print("Put-Call Parity Check (should be close to 0):", parity_check)
 
-    # Greeks 
+    # Greeks
     print("Call Delta:", delta(S, K, T, r, sigma, q, 'call_price'),
           "Apples share price rises $1, the call option price rises by ~$0.93.")
     print("Put Delta:", delta(S, K, T, r, sigma, q, 'put_price'),
@@ -167,10 +169,12 @@ if __name__ == "__main__":
 
     # implied volatility examples
     market_call_price = 100
-    implied_vol_call = implied_volatility(market_call_price, S, K, T, r, q, 'call_price')
+    implied_vol_call = implied_volatility(
+        market_call_price, S, K, T, r, q, 'call_price')
     print("Implied Volatility from market call price of $100.0:", implied_vol_call)
     market_put_price = 10.0
-    implied_vol_put = implied_volatility(market_put_price, S, K, T, r, q, 'put_price')
+    implied_vol_put = implied_volatility(
+        market_put_price, S, K, T, r, q, 'put_price')
     print("Implied Volatility from market put price of $10.0:", implied_vol_put)
 
     # Calculating preferred options based on implied volatility
@@ -178,15 +182,19 @@ if __name__ == "__main__":
     options_chain = options_chain.dropna(subset=["strike", "lastPrice"]).copy()
     options_chain["strike"] = options_chain["strike"].astype(float)
     options_chain["lastPrice"] = options_chain["lastPrice"].astype(float)
-    options_chain = options_chain[(options_chain["strike"] > 0) & (options_chain["lastPrice"] > 0)]
-    options_chain["T_row"] = options_chain.apply(lambda r_: _row_T(r_, T), axis=1)
+    options_chain = options_chain[(options_chain["strike"] > 0) & (
+        options_chain["lastPrice"] > 0)]
+    options_chain["T_row"] = options_chain.apply(
+        lambda r_: _row_T(r_, T), axis=1)
     options_chain["IV"] = options_chain.apply(
-        lambda r_: implied_volatility(r_["lastPrice"], S, r_["strike"], r_["T_row"], r, q, r_["option_type"]),
+        lambda r_: implied_volatility(r_["lastPrice"], S, r_["strike"], r_[
+                                      "T_row"], r, q, r_["option_type"]),
         axis=1
     )
     options_chain = options_chain.dropna(subset=["IV"]).copy()
     options_chain["Delta"] = options_chain.apply(
-        lambda r_: delta(S, r_["strike"], r_["T_row"], r, r_["IV"], q, r_["option_type"]),
+        lambda r_: delta(S, r_["strike"], r_["T_row"], r,
+                         r_["IV"], q, r_["option_type"]),
         axis=1
     )
     options_chain["absDelta"] = options_chain["Delta"].abs()
@@ -198,11 +206,13 @@ if __name__ == "__main__":
 
     buyers_calls = options_chain[
         (options_chain["option_type"] == "call_price") &
-        (options_chain["moneyness"].between(BUYER_MONEYNESS_MIN, BUYER_MONEYNESS_MAX))
+        (options_chain["moneyness"].between(
+            BUYER_MONEYNESS_MIN, BUYER_MONEYNESS_MAX))
     ].sort_values("IV")
     buyers_puts = options_chain[
         (options_chain["option_type"] == "put_price") &
-        (options_chain["moneyness"].between(BUYER_MONEYNESS_MIN, BUYER_MONEYNESS_MAX))
+        (options_chain["moneyness"].between(
+            BUYER_MONEYNESS_MIN, BUYER_MONEYNESS_MAX))
     ].sort_values("IV")
     sellers_calls = options_chain[
         (options_chain["option_type"] == "call_price") &
@@ -225,21 +235,26 @@ if __name__ == "__main__":
     if best_call_for_buyer.empty:
         print("Buyer (Call, low IV near ATM): no contract met the filter")
     else:
-        print(_fmt_pick("Buyer (Call, low IV near ATM)", best_call_for_buyer.iloc[0]))
+        print(_fmt_pick("Buyer (Call, low IV near ATM)",
+              best_call_for_buyer.iloc[0]))
     if best_put_for_buyer.empty:
         print("Buyer (Put, low IV near ATM): no contract met the filter")
     else:
-        print(_fmt_pick("Buyer (Put, low IV near ATM)", best_put_for_buyer.iloc[0]))
+        print(_fmt_pick("Buyer (Put, low IV near ATM)",
+              best_put_for_buyer.iloc[0]))
     if best_call_for_seller.empty:
         print("Seller (Call, OTM, high IV, |Δ|≤0.25): no contract met the filter")
     else:
-        print(_fmt_pick("Seller (Call, OTM, high IV, |Δ|≤0.25)", best_call_for_seller.iloc[0]))
+        print(_fmt_pick("Seller (Call, OTM, high IV, |Δ|≤0.25)",
+              best_call_for_seller.iloc[0]))
     if best_put_for_seller.empty:
         print("Seller (Put, OTM, high IV, |Δ|≤0.25): no contract met the filter")
     else:
-        print(_fmt_pick("Seller (Put, OTM, high IV, |Δ|≤0.25)", best_put_for_seller.iloc[0]))
+        print(_fmt_pick("Seller (Put, OTM, high IV, |Δ|≤0.25)",
+              best_put_for_seller.iloc[0]))
 
-    cols = ["option_type", "expiration", "strike", "lastPrice", "T_row", "IV", "Delta", "absDelta", "moneyness"]
+    cols = ["option_type", "expiration", "strike", "lastPrice",
+            "T_row", "IV", "Delta", "absDelta", "moneyness"]
     for c in cols:
         if c not in options_chain.columns:
             options_chain[c] = np.nan
