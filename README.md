@@ -1,32 +1,46 @@
-# Option Pricing (Black–Scholes) + IV & Greeks
+Option Pricing (Black–Scholes) + Implied Volatility & Greeks
 
-Single-file Python project that prices European calls/puts with a continuous dividend yield `q`, computes Greeks, solves implied volatility via Brent’s method, and scans a simple option chain to surface buyer/seller candidates. Outputs a CSV snapshot for quick review.
+A single-file Python project that:
+Prices European calls/puts under Black–Scholes–Merton with continuous dividend yield q.
+Computes closed-form Greeks.
+Solves implied volatility (IV) from market prices (Brent’s method).
+Scans an option chain to surface “best” contracts for buyers and sellers using IV-based rules.
+Exports a CSV snapshot of all evaluated contracts.
 
-## What’s inside
-- **Pricing:** `call_price`, `put_price` (with dividend yield `q`). :contentReference[oaicite:0]{index=0}
-- **Greeks:** `delta`, `gamma`, `vega`, `theta`, `rho`. :contentReference[oaicite:1]{index=1}
-- **IV solver:** `implied_volatility` (root-finds σ from a market price with Brent’s method). :contentReference[oaicite:2]{index=2}
-- **Chain scan:** reads `options.csv` (or builds a realistic synthetic chain) → computes IV & Δ → picks “preferred” buyer/seller contracts and saves `iv_scan_snapshot.csv`. :contentReference[oaicite:3]{index=3}
-- **Main guard:** can be imported without auto-running (`if __name__ == "__main__":`). :contentReference[oaicite:4]{index=4}
+If options.csv isn’t present, the script builds a realistic synthetic chain around your spot so the demo always runs.
 
-## Units in printed output
-- **Theta** shown **per day** (yearly theta ÷ 365 at print). :contentReference[oaicite:5]{index=5}
-- **Vega** shown **per +1% vol** (yearly vega × 0.01 at print). :contentReference[oaicite:6]{index=6}
-- **Rho** shown **per +1% rate** (yearly rho × 0.01 at print). :contentReference[oaicite:7]{index=7}
+Why this project
 
-## CSV format for `options.csv`
-Minimum columns:
-- `option_type` = `call_price` or `put_price` *(or)* `type` = `call`/`put`
-- `strike`
-- `lastPrice` *(or)* both `bid` and `ask` (mid is computed)
-Optional:
-- `expiration` in `YYYY-MM-DD` (else falls back to global `T`)
+Option quotes embed the market’s expectations via implied volatility. This tool inverts for IV per contract and then systematically chooses:
+Buyer picks: lowest IV near the money (pay less implied variance where gamma matters most).
+Seller picks: OTM strikes with high IV and small |Δ| (collect richer premium with less directional exposure).
 
-> If `options.csv` is missing or unusable, the script creates a synthetic chain around `S` so the scan still runs. :contentReference[oaicite:8]{index=8}
+These choices are printed as clear one-liners and saved to iv_scan_snapshot.csv for auditability.
 
-## Quick start
-```bash
-# Python 3.10+ recommended
+Features
+
+Pricing: call_price, put_price (supports dividend yield q).
+Greeks: delta, gamma, vega, theta, rho (closed-form).
+IV solver: implied_volatility (Brent root-finder; robust bracketing).
+Chain scan: reads options.csv (or builds synthetic) → computes IV & Δ → picks buyer/seller candidates → prints concise results → saves iv_scan_snapshot.csv.
+
+Units in printed output
+
+Theta: per day (annual θ ÷ 365).
+Vega & Rho: per +1% move (annual vega/rho × 0.01).
+
+Model assumptions
+
+European exercise, constant r, q, and σ; continuous compounding.
+
+Quick start
+
 pip install -r requirements.txt
 python app.py
 
+
+CSV format (minimal)
+
+option_type,strike,lastPrice,expiration
+call_price,240,6.10,2025-10-17
+put_price,235,6.00,2025-10-17
